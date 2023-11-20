@@ -1,0 +1,59 @@
+on:
+  workflow_call:
+    inputs:
+      profile:
+        required: true
+        type: string
+    secrets:
+      token:
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: docker
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: tags
+        run: git fetch --tags
+
+      - name: release
+        run: |
+          echo $TOKEN | docker login ghcr.io -u rotilho --password-stdin
+          
+          RELEASE_BRANCH=$(echo "${{ github.ref_name }}" | sed 's/release\///')
+          MAJOR_VERSION=$(echo "$RELEASE_BRANCH" | awk -F. '{print $1}')
+          LATEST_TAG=$(git tag --list "v$MAJOR_VERSION.*" --sort=-v:refname | head -n1)
+          
+          if [ -z "$LATEST_TAG" ]; then
+            MINOR=0
+          elif [ "${{ inputs.profile }}" == "pubsub" ]; then
+            MINOR=$(( ${LATEST_TAG##*.} + 1 ))
+          else
+            MINOR=${LATEST_TAG##*.}
+          fi
+          
+          NEXT_TAG="$MAJOR_VERSION.$MINOR"
+          
+          echo "FROM ghcr.io/attocash/work-adapter:${{ github.sha }}" > EnvDockerfile
+          echo "LABEL org.opencontainers.image.source https://github.com/attocash/work-adapter" >> EnvDockerfile
+          echo "ENV SPRING_PROFILES_ACTIVE=${{ inputs.profile }}" >> EnvDockerfile
+          
+          docker build -t ghcr.io/attocash/work-adapter:${NEXT_TAG}-${{ inputs.profile }} -f EnvDockerfile .
+          docker tag ghcr.io/attocash/work-adapter:${NEXT_TAG}-${{ inputs.profile }} ghcr.io/attocash/work-adapter:${MAJOR_VERSION}-${{ inputs.profile }}
+          docker push ghcr.io/attocash/work-adapter:${NEXT_TAG}-${{ inputs.profile }}
+          docker push ghcr.io/attocash/work-adapter:${MAJOR_VERSION}-${{ inputs.profile }}
+          
+          HIGHER_MAJOR_EXISTS=$(git tag --list 'v*' --sort=-v:refname | awk -F. '{print $1}' | sed 's/v//' | uniq | awk -v curr="$MAJOR_VERSION" '$1>curr {print "yes"; exit}')
+          if [ "$HIGHER_MAJOR_EXISTS" != "yes" ]; then
+            docker tag ghcr.io/attocash/work-adapter:${NEXT_TAG}-${{ inputs.profile }} ghcr.io/attocash/work-adapter:${{ inputs.profile }}
+            docker push ghcr.io/attocash/work-adapter:${{ inputs.profile }}
+          fi
+          
+          if [ "${{ inputs.profile }}" == "pubsub" ]; then
+            git tag v$NEXT_TAG
+            git push origin v$NEXT_TAG
+          fi
+        env:
+          TOKEN: ${{ secrets.token }}

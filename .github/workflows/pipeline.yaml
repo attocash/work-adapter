@@ -1,0 +1,34 @@
+name: Pipeline
+
+on:
+  workflow_call:
+  push:
+    branches:
+      - 'release/[0-9]+.x'
+      - main
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yaml
+  codeql:
+    uses: ./.github/workflows/codeql.yaml
+  docker:
+    if: "startsWith(github.ref, 'refs/heads/')"
+    needs:
+      - build
+      - codeql
+    uses: ./.github/workflows/docker.yaml
+    secrets:
+      token: ${{ secrets.TOKEN }}
+  release:
+    if: "startsWith(github.ref, 'refs/heads/release/') && endsWith(github.ref, '.x')"
+    needs:
+      - docker
+    strategy:
+      matrix:
+        messaging: [ "pubsub" ]
+    uses: ./.github/workflows/release.yaml
+    with:
+      profile: ${{ matrix.messaging }}
+    secrets:
+      token: ${{ secrets.TOKEN }}

@@ -1,0 +1,9 @@
+spring.cloud.gcp.project-id: project
+
+
+atto:
+  adapter:
+    url: http://localhost:${wiremock.server.port}
+  pubsub:
+    work-requested-subscription: requested-subscription
+    work-generated-topic: generated-topic
