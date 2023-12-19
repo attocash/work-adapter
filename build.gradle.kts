@@ -5,8 +5,8 @@ plugins {
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.spring") version kotlinVersion
 
-    id("org.springframework.boot") version "3.1.5"
-    id("io.spring.dependency-management") version "1.1.3"
+    id("org.springframework.boot") version "3.2.0"
+    id("io.spring.dependency-management") version "1.1.4"
 //    id("org.graalvm.buildtools.native") version "0.9.27"
 
 }
@@ -16,7 +16,6 @@ java.sourceCompatibility = JavaVersion.VERSION_21
 
 repositories {
     mavenCentral()
-    maven { url = uri("https://repo.spring.io/milestone") }
 }
 
 configurations {
@@ -25,8 +24,8 @@ configurations {
     }
 }
 
-extra["springCloudGcpVersion"] = "4.8.2"
-extra["springCloudVersion"] = "2022.0.4"
+extra["springCloudGcpVersion"] = "5.0.0"
+extra["springCloudVersion"] = "2023.0.0"
 
 dependencyManagement {
     imports {
@@ -38,7 +37,7 @@ dependencyManagement {
 dependencies {
     val cucumberVersion = "7.15.0"
 
-    implementation("cash.atto:commons:1.3.2")
+    implementation("cash.atto:commons:2.0.1")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
