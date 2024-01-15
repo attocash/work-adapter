@@ -3,7 +3,6 @@ package cash.atto.work.adapter
 import cash.atto.commons.AttoNetwork
 import cash.atto.commons.AttoOpenBlock
 import cash.atto.commons.AttoWork
-import cash.atto.commons.fromHexToByteArray
 import cash.atto.work.*
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.google.cloud.spring.pubsub.core.PubSubTemplate
@@ -32,7 +31,7 @@ class WorkStepDefinition(
 
         val workRequested = WorkRequested(
             "http://mock-url:7777",
-            block.hash.toString(),
+            block.hash,
             AttoWork.threshold(AttoNetwork.LOCAL, block.timestamp),
         )
         pubSubTemplate.publish(CucumberConfiguration.workRequestedTopic, workRequested)
@@ -44,7 +43,7 @@ class WorkStepDefinition(
     fun assertGenerated() {
         val shortKey = PropertyHolder.getActiveKey(AttoOpenBlock::class.java)!!
         val block = PropertyHolder.get(AttoOpenBlock::class.java, shortKey)
-        val hash = block.hash.toString()
+        val hash = block.hash
         val workGenerated = Waiter.waitUntilNonNull {
             pubSubTemplate.pullAndConvertAsync(
                 CucumberConfiguration.workGeneratedSubscription,
@@ -71,7 +70,7 @@ class WorkStepDefinition(
                 AttoNetwork.LOCAL,
                 block.timestamp,
                 block.hash,
-                AttoWork(workGenerated.work.fromHexToByteArray())
+                workGenerated.work
             )
         )
     }

@@ -4,6 +4,7 @@ plugins {
     val kotlinVersion = "1.9.22"
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.spring") version kotlinVersion
+    kotlin("plugin.serialization") version kotlinVersion
 
     id("org.springframework.boot") version "3.2.1"
     id("io.spring.dependency-management") version "1.1.4"
@@ -37,8 +38,9 @@ dependencyManagement {
 dependencies {
     val cucumberVersion = "7.15.0"
 
-    implementation("cash.atto:commons:2.1.1")
+    implementation("cash.atto:commons:2.5.1")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 
     implementation("org.springframework.boot:spring-boot-starter-web")
