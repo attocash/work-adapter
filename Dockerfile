@@ -1,21 +1,12 @@
-FROM eclipse-temurin:21-alpine as jdk
+FROM gcr.io/distroless/static:nonroot
 
-COPY ./build/libs/work-adapter.jar /work-adapter.jar
+COPY ./build/native/nativeCompile/work-adapter /app/work-adapter
 
-RUN jar -xvf work-adapter.jar && jlink --add-modules $(jdeps --recursive --multi-release 21 --ignore-missing-deps --print-module-deps -cp 'BOOT-INF/lib/*' work-adapter.jar) --output /java
+WORKDIR /app
 
-FROM alpine
+USER nonroot:nonroot
 
-LABEL org.opencontainers.image.source https://github.com/attocash/work-adapter
+EXPOSE 8080
+EXPOSE 8081
 
-ENV JAVA_HOME=/java
-ENV PATH "${JAVA_HOME}/bin:${PATH}"
-
-RUN adduser -D atto
-USER atto
-
-COPY ./build/libs/work-adapter.jar /home/atto/work-adapter.jar
-
-COPY --from=jdk /java /java
-
-ENTRYPOINT ["java","-XX:+UseZGC","-jar","/home/atto/work-adapter.jar"]
+ENTRYPOINT ["./work-adapter"]
